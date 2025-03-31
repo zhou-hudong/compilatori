@@ -10,6 +10,7 @@ make
 
 
 // nella cartella test
+
 // clang -S -emit-llvm -O0 prova.c -o prova.ll
 
 clang -Xclang -disable-O0-optnone -S -emit-llvm -O0 prova.c -o prova.ll
