@@ -8,13 +8,17 @@ define dso_local void @prova1(i32 noundef %0) #0 {
   %2 = alloca i32, align 4
   %3 = alloca i32, align 4
   %4 = alloca i32, align 4
+  %5 = alloca i32, align 4
   store i32 %0, ptr %2, align 4
-  %5 = load i32, ptr %2, align 4
-  %6 = add nsw i32 %5, 0
-  store i32 %6, ptr %3, align 4
-  %7 = load i32, ptr %2, align 4
-  %8 = add nsw i32 0, %7
-  store i32 %8, ptr %4, align 4
+  %6 = load i32, ptr %2, align 4
+  %7 = add nsw i32 %6, 0
+  store i32 %7, ptr %3, align 4
+  %8 = load i32, ptr %2, align 4
+  %9 = add nsw i32 0, %8
+  store i32 %9, ptr %4, align 4
+  %10 = load i32, ptr %3, align 4
+  %11 = add nsw i32 %10, 1
+  store i32 %11, ptr %5, align 4
   ret void
 }
 
@@ -23,13 +27,17 @@ define dso_local void @prova2(i32 noundef %0) #0 {
   %2 = alloca i32, align 4
   %3 = alloca i32, align 4
   %4 = alloca i32, align 4
+  %5 = alloca i32, align 4
   store i32 %0, ptr %2, align 4
-  %5 = load i32, ptr %2, align 4
-  %6 = mul nsw i32 %5, 1
-  store i32 %6, ptr %3, align 4
-  %7 = load i32, ptr %2, align 4
-  %8 = mul nsw i32 1, %7
-  store i32 %8, ptr %4, align 4
+  %6 = load i32, ptr %2, align 4
+  %7 = mul nsw i32 %6, 1
+  store i32 %7, ptr %3, align 4
+  %8 = load i32, ptr %2, align 4
+  %9 = mul nsw i32 1, %8
+  store i32 %9, ptr %4, align 4
+  %10 = load i32, ptr %3, align 4
+  %11 = mul nsw i32 %10, 2
+  store i32 %11, ptr %5, align 4
   ret void
 }
 
@@ -64,13 +72,17 @@ define dso_local void @prova5(i32 noundef %0) #0 {
   %2 = alloca i32, align 4
   %3 = alloca i32, align 4
   %4 = alloca i32, align 4
+  %5 = alloca i32, align 4
   store i32 %0, ptr %2, align 4
-  %5 = load i32, ptr %2, align 4
-  %6 = add nsw i32 %5, 1
-  store i32 %6, ptr %3, align 4
-  %7 = load i32, ptr %3, align 4
-  %8 = sub nsw i32 %7, 1
-  store i32 %8, ptr %4, align 4
+  %6 = load i32, ptr %2, align 4
+  %7 = add nsw i32 %6, 1
+  store i32 %7, ptr %3, align 4
+  %8 = load i32, ptr %3, align 4
+  %9 = sub nsw i32 %8, 1
+  store i32 %9, ptr %4, align 4
+  %10 = load i32, ptr %4, align 4
+  %11 = add nsw i32 %10, 1
+  store i32 %11, ptr %5, align 4
   ret void
 }
 

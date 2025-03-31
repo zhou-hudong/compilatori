@@ -20,12 +20,14 @@ void prova1 (int x){
 
   int a = x + 0;
   int b = 0 + x;
+  int c = a + 1;
 
 };
 
 void prova2 (int x){
   int c = x * 1;
   int d = 1 * x;
+  int e = c * 2;
 };
 
 void prova3 (int x){
@@ -40,4 +42,5 @@ void prova4 (int x){
 void prova5 (int b){
   int a = b + 1;
   int c = a - 1;
+  int d = c + 1;
 }
