@@ -9,16 +9,24 @@ define dso_local void @prova1(i32 noundef %0) #0 {
   %3 = alloca i32, align 4
   %4 = alloca i32, align 4
   %5 = alloca i32, align 4
+  %6 = alloca i32, align 4
+  %7 = alloca i32, align 4
   store i32 %0, ptr %2, align 4
-  %6 = load i32, ptr %2, align 4
-  %7 = add nsw i32 %6, 0
-  store i32 %7, ptr %3, align 4
   %8 = load i32, ptr %2, align 4
-  %9 = add nsw i32 0, %8
-  store i32 %9, ptr %4, align 4
-  %10 = load i32, ptr %3, align 4
-  %11 = add nsw i32 %10, 1
-  store i32 %11, ptr %5, align 4
+  %9 = add nsw i32 %8, 0
+  store i32 %9, ptr %3, align 4
+  %10 = load i32, ptr %2, align 4
+  %11 = add nsw i32 0, %10
+  store i32 %11, ptr %4, align 4
+  %12 = load i32, ptr %3, align 4
+  %13 = add nsw i32 %12, 1
+  store i32 %13, ptr %5, align 4
+  %14 = load i32, ptr %2, align 4
+  %15 = sub nsw i32 %14, 0
+  store i32 %15, ptr %6, align 4
+  %16 = load i32, ptr %2, align 4
+  %17 = sub nsw i32 0, %16
+  store i32 %17, ptr %7, align 4
   ret void
 }
 
@@ -28,16 +36,24 @@ define dso_local void @prova2(i32 noundef %0) #0 {
   %3 = alloca i32, align 4
   %4 = alloca i32, align 4
   %5 = alloca i32, align 4
+  %6 = alloca i32, align 4
+  %7 = alloca i32, align 4
   store i32 %0, ptr %2, align 4
-  %6 = load i32, ptr %2, align 4
-  %7 = mul nsw i32 %6, 1
-  store i32 %7, ptr %3, align 4
   %8 = load i32, ptr %2, align 4
-  %9 = mul nsw i32 1, %8
-  store i32 %9, ptr %4, align 4
-  %10 = load i32, ptr %3, align 4
-  %11 = mul nsw i32 %10, 2
-  store i32 %11, ptr %5, align 4
+  %9 = mul nsw i32 %8, 1
+  store i32 %9, ptr %3, align 4
+  %10 = load i32, ptr %2, align 4
+  %11 = mul nsw i32 1, %10
+  store i32 %11, ptr %4, align 4
+  %12 = load i32, ptr %3, align 4
+  %13 = mul nsw i32 %12, 2
+  store i32 %13, ptr %5, align 4
+  %14 = load i32, ptr %2, align 4
+  %15 = sdiv i32 %14, 1
+  store i32 %15, ptr %6, align 4
+  %16 = load i32, ptr %2, align 4
+  %17 = sdiv i32 %16, 2
+  store i32 %17, ptr %7, align 4
   ret void
 }
 
@@ -73,16 +89,24 @@ define dso_local void @prova5(i32 noundef %0) #0 {
   %3 = alloca i32, align 4
   %4 = alloca i32, align 4
   %5 = alloca i32, align 4
+  %6 = alloca i32, align 4
+  %7 = alloca i32, align 4
   store i32 %0, ptr %2, align 4
-  %6 = load i32, ptr %2, align 4
-  %7 = add nsw i32 %6, 1
-  store i32 %7, ptr %3, align 4
-  %8 = load i32, ptr %3, align 4
-  %9 = sub nsw i32 %8, 1
-  store i32 %9, ptr %4, align 4
-  %10 = load i32, ptr %4, align 4
-  %11 = add nsw i32 %10, 1
-  store i32 %11, ptr %5, align 4
+  %8 = load i32, ptr %2, align 4
+  %9 = add nsw i32 %8, 1
+  store i32 %9, ptr %3, align 4
+  %10 = load i32, ptr %3, align 4
+  %11 = sub nsw i32 %10, 1
+  store i32 %11, ptr %4, align 4
+  %12 = load i32, ptr %4, align 4
+  %13 = add nsw i32 %12, 1
+  store i32 %13, ptr %5, align 4
+  %14 = load i32, ptr %2, align 4
+  %15 = mul nsw i32 %14, 2
+  store i32 %15, ptr %6, align 4
+  %16 = load i32, ptr %6, align 4
+  %17 = sdiv i32 %16, 2
+  store i32 %17, ptr %7, align 4
   ret void
 }
 
