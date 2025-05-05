@@ -1,0 +1,9 @@
+/home/user/Downloads/Laboratori_Compilatori/assignment3/build/CMakeFiles/intrinsics_gen.dir
+/home/user/Downloads/Laboratori_Compilatori/assignment3/build/CMakeFiles/omp_gen.dir
+/home/user/Downloads/Laboratori_Compilatori/assignment3/build/CMakeFiles/acc_gen.dir
+/home/user/Downloads/Laboratori_Compilatori/assignment3/build/CMakeFiles/ARMTargetParserTableGen.dir
+/home/user/Downloads/Laboratori_Compilatori/assignment3/build/CMakeFiles/AArch64TargetParserTableGen.dir
+/home/user/Downloads/Laboratori_Compilatori/assignment3/build/CMakeFiles/RISCVTargetParserTableGen.dir
+/home/user/Downloads/Laboratori_Compilatori/assignment3/build/CMakeFiles/LoopPass.dir
+/home/user/Downloads/Laboratori_Compilatori/assignment3/build/CMakeFiles/edit_cache.dir
+/home/user/Downloads/Laboratori_Compilatori/assignment3/build/CMakeFiles/rebuild_cache.dir
