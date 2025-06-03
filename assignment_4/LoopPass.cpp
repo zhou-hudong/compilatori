@@ -599,6 +599,8 @@ struct PairOfBB{
 };
 
 void LoopFusion(Loop* L1,Loop* L2, SmallVector<Loop *, 8> Worklist,LoopInfo &LI,DominatorTree &DT){
+  
+  // ottengo i Phi di induzione
   errs()<<"Header Loop : \n";
   errs()<<*L1->getHeader()<<"\n"<<*L2->getHeader()<<"\n";
   errs()<<"Getting Induction variable\n";
@@ -610,7 +612,9 @@ void LoopFusion(Loop* L1,Loop* L2, SmallVector<Loop *, 8> Worklist,LoopInfo &LI,
 
 
   
-
+  // ottengo i blocchi header e latch, assegno bocchi di salto di br di true e false (first, end)
+  // BI1 BI2 assegno istruzione che decide di uscire o no dal loop
+  // No loop index -> per memorizzare indice di L1 nel BI1 in quale successor esce dal loop
   //errs()<<"if condition\n"<<*L2->getLoopPreheader()->getSinglePredecessor()<<"\n";
   BasicBlock* L1Header= L1->getHeader();
   BasicBlock* L2Header= L2->getHeader();
@@ -619,6 +623,8 @@ void LoopFusion(Loop* L1,Loop* L2, SmallVector<Loop *, 8> Worklist,LoopInfo &LI,
   BasicBlock* L2FirstBody= nullptr,*L2EndBody=nullptr,* L1EndBody=nullptr,*L2NoLoopExit=nullptr;
   BranchInst *BI1=nullptr,*BI2=nullptr;
   int L1NoLoopIndex=-1;
+
+  //  trovo e memorizzo isruzione di branch condition
   if(isa<BranchInst>(L2Header->getTerminator())){
     BranchInst* BI=dyn_cast<BranchInst>(L2Header->getTerminator());
 
@@ -651,6 +657,8 @@ void LoopFusion(Loop* L1,Loop* L2, SmallVector<Loop *, 8> Worklist,LoopInfo &LI,
 
     }
   }
+
+  // secondo il branch condition, memorizzo i due blocchi che presentato il true e false del branch
   if(BI1 && BI2){
     errs()<<"exit branch1\n"<<*BI1<<"\nexit branch2\n"<<*BI2<<"\n";
     for(int i=0;i<BI2->getNumSuccessors();i++){
@@ -664,6 +672,7 @@ void LoopFusion(Loop* L1,Loop* L2, SmallVector<Loop *, 8> Worklist,LoopInfo &LI,
         //errs()<<"NoLoopExit\n"<<*BB<<"\n";
       }
     }
+    // memorizzo indice che salta fuori dal loop
     for(int i=0;i<BI1->getNumSuccessors();i++){
       BasicBlock* BB=BI1->getSuccessor(i);
       if(!L1->contains(BB)){
@@ -674,20 +683,25 @@ void LoopFusion(Loop* L1,Loop* L2, SmallVector<Loop *, 8> Worklist,LoopInfo &LI,
 
   }
 
+  // trovo ultimo blocco latch del loop
   L1EndBody=L1Latch->getSinglePredecessor();
   L2EndBody=L2Latch->getSinglePredecessor();
-  //redirection
+
+  // redireziono L2 dopo latch di L1
   if(isa<BranchInst>(L2EndBody->getTerminator())){
     BranchInst *L2BI = dyn_cast<BranchInst>(L2EndBody->getTerminator());
     if(!L2BI->isConditional()){
+      // branch senza condizione, cambio direttamente
       L2EndBody->getTerminator()->setSuccessor(0,L1Latch);
-      
+
+      // secondo indice, redireziono il branch di uscita loop L1 all'uscita di L2
       if(L1NoLoopIndex!=-1){
         errs()<<"Modifying the non loop exit\nbefore\n"<<*BI1->getSuccessor(L1NoLoopIndex)<<"\n";
         BI1->setSuccessor(L1NoLoopIndex,L2NoLoopExit);
         errs()<<"Modified the non loop exit\nafter\n"<<*BI1->getSuccessor(L1NoLoopIndex)<<"\n";
       }
 
+      // redireziono L1 se salta direttamente al L1 header, lo direziono al header di L2
       if(isa<BranchInst>(L1EndBody->getTerminator())){
         BranchInst *L1BI = dyn_cast<BranchInst>(L1EndBody->getTerminator());
         if(!L1BI->isConditional()){
@@ -698,6 +712,7 @@ void LoopFusion(Loop* L1,Loop* L2, SmallVector<Loop *, 8> Worklist,LoopInfo &LI,
   }
   errs()<<"End of redirection\n";
 
+  // impiatto induzione di L2 a quello di L1, e controllo se  induction1 domina tutto
   errs()<<"Before replace\n";
   inductionL2->replaceAllUsesWith(inductionL1);
   for (auto &U : inductionL2->uses()) {
@@ -707,17 +722,22 @@ void LoopFusion(Loop* L1,Loop* L2, SmallVector<Loop *, 8> Worklist,LoopInfo &LI,
     }
   }
   
-
+  // elimino induzione di L2
   errs()<<"Induction variable moving....\n";
   if (inductionL2->use_empty()){
     inductionL2->eraseFromParent();
   }
   errs()<<"Induction variable moved....\nBasicBlock in L2 after modification of induction variable\n";
+  
+  // in questo punto abbiamo finito di cambiare control flow
+  // adesso spostiamo i blocchi in L1
+
   int icmpflag=0,removeheader=1;
 
   //move the body
   for(BasicBlock* BB : L2->getBlocks()){
     if(BB == L2Header){
+      // controllo se L2 ha icmp, conservandolo per riscrivere logica di icmp in BI2
       icmpflag=0;
       for(Instruction &Inst : *BB){
         if(isa<ICmpInst>(&Inst)){
@@ -729,39 +749,48 @@ void LoopFusion(Loop* L1,Loop* L2, SmallVector<Loop *, 8> Worklist,LoopInfo &LI,
         errs()<<"header of L2\n"<<*BB<<"\nContain ICmpInstruction\n";
 
       }
+      // se non ha icmp, lo consideriamo come un normale blocco, spostandolo
       else{
         removeheader=0;
         L1EndBody->getTerminator()->setSuccessor(0,L2Header);
         BB->moveBefore(L1Latch);
-        //To notify the LI the Loop content is changed
+        //Per notificare al LI che il contenuto del Loop è cambiato
         L1->addBasicBlockToLoop(BB, LI);
         errs()<<"header of L2\n"<<*BB<<"\nDoesn't contain ICmpInstruction, added to loop1\n";
       }
     }
     else if(BB == L2Latch){
       errs()<<"latch of L2\n"<<*BB<<"\n";
+      // lascio latch per ultimo da spostare
     }
     else if(BB != L2Header && BB != L2Latch){
       errs()<<"BasicBlock"<<*BB<<"\n";
       BB->moveBefore(L1Latch);
-      //To notify the LI the Loop content is changed
+      //Per notificare al LI che il contenuto del Loop è cambiato
       L1->addBasicBlockToLoop(BB, LI);
 
     }
   }
 
+  // copy e ricostruzione Phi di L2 header
   SmallVector<PHINode*, 4> InstMoved;
   for (auto &I : *L2Header) {
     if (auto *phi = dyn_cast<PHINode>(&I)) {
       errs()<<"Phi :\n"<<*phi<<"\n";
+      // creo un Phi
       PHINode *phiNew = PHINode::Create(phi->getType(), phi->getNumIncomingValues(), "", inductionL1->getNextNode());
       for (unsigned i = 0; i < phi->getNumIncomingValues(); ++i) {
         Value *incomingVal = phi->getIncomingValue(i);
         BasicBlock *incomingBB = phi->getIncomingBlock(i);
         errs()<<"Incoming block:\n"<<*incomingBB<<"\n has value "<<*incomingVal<<"\n";
-        // Decide where to set the incoming block
+
+        // Determina quale blocco ha originariamente passato il valore a questo PHI.
+        // Se si tratta di un blocco in L2, utilizzare L1Latch come nuovo BB in arrivo;
+        // Altrimenti, utilizzare il preheader di L1.
+        
+        // Decidere dove impostare il blocco in arrivo
         BasicBlock *newIncomingBB = nullptr;
-        //the block moved from loop has origin contained by L2
+        // il blocco spostato dal loop ha origine contenuta in L2
         if (L2->contains(incomingBB)) {
           errs()<<"containde by L2\n";
           newIncomingBB = L1Latch;
@@ -782,7 +811,7 @@ void LoopFusion(Loop* L1,Loop* L2, SmallVector<Loop *, 8> Worklist,LoopInfo &LI,
   
   
   
-  
+  // Elimina Preheader, Latch, Header di L2 e aggiorna LoopInfo
   if( L2->getLoopPreheader()){
     //in case guarded, the guarded is loopheader...So this if isn't needed.
     errs()<<"Loop preheader\n"<<*L2->getLoopPreheader()<<"\n";
@@ -804,7 +833,7 @@ void LoopFusion(Loop* L1,Loop* L2, SmallVector<Loop *, 8> Worklist,LoopInfo &LI,
     L2->getHeader()->eraseFromParent();
   }
   
-  //If the loop to be remove is a child loop, we need distach it from its parent!!!
+  // Se il ciclo da rimuovere è un ciclo figlio, dobbiamo staccarlo dal suo genitore
   if (Loop *parent = L2->getParentLoop()) {
       parent->removeChildLoop(L2);  // Detaches from parent
   } else {
@@ -812,7 +841,7 @@ void LoopFusion(Loop* L1,Loop* L2, SmallVector<Loop *, 8> Worklist,LoopInfo &LI,
   }
   
   
-
+  // Pulisci i "branch senza condizione" che potrebbero essere generati dopo l'unione
   SmallVector<PairOfBB,8> BBToReplace;
   BasicBlock* nextBB=nullptr;
   BBToReplace.clear();
@@ -864,25 +893,30 @@ void LoopFusion(Loop* L1,Loop* L2, SmallVector<Loop *, 8> Worklist,LoopInfo &LI,
 
 void LoopFusionForGuarded(Loop* L1,Loop* L2, SmallVector<Loop *, 8> Worklist,LoopInfo &LI,DominatorTree &DT,BasicBlock* guardedblock1,BasicBlock* guardedblock2){
 
-  //We don't have to compare if the two guard block have same if condition or not, cause we already done it.
+  // Non dobbiamo confrontare se i due blocchi di guardia hanno la stessa condizione if o meno, perché lo abbiamo già fatto.
   errs()<<"Block Guard : \nGB1:\n"<<*guardedblock1<<"\nGB2:\n"<<*guardedblock2<<"\n";
-  //Get the exit of second if 
+  // Individuare l'uscita "false branch" del secondo if (guardedblock2) BasicBlock 
+  // condExitBB viene utilizzato per memorizzare il BasicBlock a cui si dovrebbe passare quando cond2 è falso
   BasicBlock* condExitBB=nullptr;
   if(BranchInst* BI = dyn_cast<BranchInst>(guardedblock2->getTerminator())){
     for(unsigned i=0;i<BI->getNumSuccessors();i++){
+      // Se questo successore non è "il preheader che entra nel ciclo L2", allora è "quello che salta fuori quando cond2==false"
       if(!(BI->getSuccessor(i) == L2->getLoopPreheader())){
         condExitBB=BI->getSuccessor(i);
       }
     }
   }
+  // // Se condExitBB viene trovato, stampa ed esegui il passaggio successivo: punta il ramo falso del primo if (guardedblock1) allo stesso condExitBB
   if(condExitBB){
     errs()<<"The exitblock is \n"<<*condExitBB<<"\n";
     int index=-1;
     if(BranchInst* BI = dyn_cast<BranchInst>(guardedblock1->getTerminator())){
+      // Attraversa tutti i successori di guardedblock1 e trova il bordo che punta a guardedblock2
       for(unsigned i=0;i<BI->getNumSuccessors();i++){
         if(BI->getSuccessor(i) == guardedblock2){
           index=i;
           errs()<<"GB1's exit before\n"<<*BI->getSuccessor(i)<<"\n";
+          // Modifica il bordo "cond1==false jump to guardedblock2" per saltare a condExitBB
           BI->setSuccessor(index,condExitBB);
           errs()<<"GB1's exit after\n"<<*BI->getSuccessor(i)<<"\n";
         }
@@ -890,7 +924,8 @@ void LoopFusionForGuarded(Loop* L1,Loop* L2, SmallVector<Loop *, 8> Worklist,Loo
     }
   }
 
-
+  // uguale alla funzione senza guard
+  
   errs()<<"Header Block Loop :\n";
   errs()<<*L1->getHeader()<<"\n"<<*L2->getHeader()<<"\n";
   errs()<<"Getting Induction variable\n";
